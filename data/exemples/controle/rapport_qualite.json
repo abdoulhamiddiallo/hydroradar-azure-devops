@@ -1,0 +1,46 @@
+{
+  "horodatage": "2026-10-29T21:45:00+00:00",
+  "lignes_valides": 134,
+  "lignes_quarantaine": 0,
+  "stations_referentiel": 7,
+  "stations_actives": 6,
+  "derniere_mesure": "2026-10-29T21:30:00+00:00",
+  "regles": [
+    {
+      "regle": "volume",
+      "valeur": 134,
+      "seuil": ">= 100",
+      "ok": true
+    },
+    {
+      "regle": "couverture",
+      "valeur": 0.857,
+      "seuil": ">= 0.5",
+      "ok": true
+    },
+    {
+      "regle": "fraicheur_minutes",
+      "valeur": 15,
+      "seuil": "<= 180",
+      "ok": true
+    },
+    {
+      "regle": "unicite_doublons",
+      "valeur": 0,
+      "seuil": "== 0",
+      "ok": true
+    },
+    {
+      "regle": "taux_quarantaine",
+      "valeur": 0.0,
+      "seuil": "<= 0.02",
+      "ok": true
+    }
+  ],
+  "statut": "ACCEPTE",
+  "version": "1.1.0",
+  "departement": "57",
+  "debut_extraction": "2026-10-27T21:45:00+00:00",
+  "mesures_lues": 134,
+  "mesures_nouvelles": 134
+}

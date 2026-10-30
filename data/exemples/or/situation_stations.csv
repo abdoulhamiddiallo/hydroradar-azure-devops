@@ -1,0 +1,7 @@
+﻿code_station;station;cours_eau;commune;latitude;longitude;derniere_mesure;hauteur_m;debit_m3s;variation_1h_cm;variation_24h_cm;hauteur_max_24h_m;tendance
+A793061002;La Moselle à Hagondange;La Moselle;Hagondange;49,25589423;6,184817563;2026-10-29 21:30:00+00:00;0,28;14,8;0,8;;0,321;stable
+A743061001;La Moselle à Metz [Pont des Morts];La Moselle;Metz;49,122321571;6,167185612;2026-10-29 21:30:00+00:00;2,162;;0,4;;2,17;stable
+A788101002;La Seille à Metz - Pont Lothaire amont;La Seille;Metz;49,100485691;6,188174925;2026-10-29 21:30:00+00:00;0,666;1,31;-0,2;;0,668;stable
+A764201001;La Petite Seille à Château-Salins;La Petite Seille;Chateau-Salins;48,8177255;6,505677078;2026-10-29 21:30:00+00:00;-0,27;0,394;-0,3;;-0,267;stable
+A740000101;La Moselle à Corny-sur-Moselle - Débitmètre;La Moselle Canalisee;Corny-Sur-Moselle;49,031119254;6,054052977;2026-10-29 21:30:00+00:00;3,086;21,7;-1,1;;3,137;stable
+A902102050;La Sarre à Sarrebourg;La Sarre;Sarrebourg;48,737125074;7,050125442;2026-10-29 21:00:00+00:00;1,142;0,819;;;1,143;indéterminée

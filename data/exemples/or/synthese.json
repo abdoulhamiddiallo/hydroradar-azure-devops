@@ -1,0 +1,14 @@
+{
+  "stations_suivies": 6,
+  "tendances": {
+    "stable": 5,
+    "indéterminée": 1
+  },
+  "plus_forte_hausse_1h": {
+    "station": "La Moselle à Hagondange",
+    "cours_eau": "La Moselle",
+    "variation_1h_cm": 0.8
+  },
+  "derniere_mesure": "2026-10-29T21:30:00+00:00",
+  "statut_qualite": "ACCEPTE"
+}
