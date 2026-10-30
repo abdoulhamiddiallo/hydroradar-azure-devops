@@ -1,0 +1,160 @@
+# HydroRadar : CI/CD multi-environnements sur agent auto-hébergé (0 euro de consommation Azure).
+#
+#   CI          lint, tests, couverture, puis construction du paquet (2 jobs enchaînés)
+#   DEV         déploiement et données réelles dans l'environnement de développement
+#   PROD        idem en production, après approbation (inclus seulement si deployerProd = true)
+#   Publication paquet publié dans Azure Artifacts, uniquement sur un tag v*
+
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - v*
+
+schedules:
+  - cron: '0 7,17 * * 1-5'
+    displayName: 'Rafraîchissement DEV en semaine (8 h et 18 h, heure de Paris en hiver)'
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: departement
+    displayName: 'Département à surveiller'
+    type: string
+    default: '57'
+    values:
+      - '57'
+      - '54'
+      - '88'
+      - '67'
+  - name: deployerProd
+    displayName: 'Inclure le déploiement en production'
+    type: boolean
+    default: true
+
+variables:
+  - group: hydroradar-commun
+  - name: python
+    value: '.venv\Scripts\python.exe'
+
+pool:
+  name: PoolLocal
+
+stages:
+  - stage: CI
+    displayName: 'CI : qualité du code, tests et paquet'
+    jobs:
+      - job: Qualite
+        displayName: 'Lint, tests et couverture'
+        steps:
+          - template: modeles/preparer-python.yml
+
+          - script: $(python) -m ruff check .
+            displayName: 'Analyse statique (ruff check)'
+
+          - script: $(python) -m ruff format --check .
+            displayName: 'Mise en forme (ruff format)'
+
+          - script: $(python) -m pytest --junitxml=resultats-tests.xml --cov --cov-report=xml
+            displayName: 'Tests unitaires et couverture (pytest)'
+
+          - task: PublishTestResults@2
+            displayName: 'Publier les résultats de tests'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: 'resultats-tests.xml'
+              testRunTitle: 'Tests HydroRadar'
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publier la couverture de code'
+            inputs:
+              summaryFileLocation: 'coverage.xml'
+
+          - powershell: |
+              Write-Host "Longueur du secret : $($env:JETON.Length) caractères"
+              Write-Host "Valeur affichée dans le journal : $env:JETON"
+            displayName: 'Démonstration : un secret reste masqué'
+            env:
+              JETON: $(jetonDemo)
+
+      - job: Paquet
+        displayName: 'Construire le paquet (wheel)'
+        dependsOn: Qualite
+        steps:
+          - template: modeles/preparer-python.yml
+
+          - script: $(python) outils\version.py
+            name: version
+            displayName: 'Estampiller la version'
+
+          - script: $(python) -m build --wheel --outdir dist
+            displayName: 'Construire la wheel'
+
+          - publish: dist
+            artifact: paquet
+            displayName: 'Publier l''artefact paquet'
+
+  - stage: DEV
+    displayName: 'DEV : données réelles'
+    dependsOn: CI
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - template: modeles/deployer.yml
+        parameters:
+          environnement: hydroradar-dev
+          dossier: '$(racine)\dev\${{ parameters.departement }}'
+          departement: ${{ parameters.departement }}
+          joursInitiaux: $(joursInitiaux)
+
+  - ${{ if eq(parameters.deployerProd, true) }}:
+      - stage: PROD
+        displayName: 'PROD : publication approuvée'
+        dependsOn:
+          - CI
+          - DEV
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'Schedule'))
+        jobs:
+          - template: modeles/deployer.yml
+            parameters:
+              environnement: hydroradar-prod
+              dossier: '$(racine)\prod\${{ parameters.departement }}'
+              departement: ${{ parameters.departement }}
+              joursInitiaux: $(joursInitiaux)
+
+  - stage: Publication
+    displayName: 'Publication du paquet dans Azure Artifacts'
+    dependsOn: CI
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+    jobs:
+      - job: Twine
+        displayName: 'twine upload vers le flux hydroradar-paquets'
+        # Agent auto-hébergé : son dossier de travail survit d'une exécution à l'autre.
+        # On le vide, et on ne publie que la wheel de CETTE exécution, désignée par son nom exact.
+        workspace:
+          clean: all
+        variables:
+          versionPaquet: $[ stageDependencies.CI.Paquet.outputs['version.numero'] ]
+        steps:
+          - checkout: none
+
+          - download: current
+            artifact: paquet
+            displayName: 'Récupérer le paquet construit en CI'
+
+          - task: TwineAuthenticate@1
+            displayName: 'Authentifier twine auprès du flux'
+            inputs:
+              artifactFeed: 'HydroRadar/hydroradar-paquets'
+
+          - script: |
+              python -m venv .venv-twine
+              .venv-twine\Scripts\python.exe -m pip install --quiet twine
+              .venv-twine\Scripts\python.exe -m twine upload -r hydroradar-paquets --config-file "$(PYPIRC_PATH)" "$(Pipeline.Workspace)\paquet\hydroradar-$(versionPaquet)-py3-none-any.whl"
+            displayName: 'Publier la wheel'

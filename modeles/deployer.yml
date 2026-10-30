@@ -1,0 +1,53 @@
+# Modèle de job (jobs template) : déploie le paquet et traite les données dans UN environnement.
+# Le même modèle sert à la DEV et à la PROD : seuls les paramètres changent.
+
+parameters:
+  - name: environnement
+    type: string
+  - name: dossier
+    type: string
+  - name: departement
+    type: string
+  - name: joursInitiaux
+    type: string
+    default: '2'
+
+jobs:
+  - deployment: Executer
+    displayName: 'HydroRadar sur ${{ parameters.environnement }}'
+    environment: ${{ parameters.environnement }}
+    variables:
+      # Variable de sortie du job Paquet (stage CI) : la version exacte construite par CETTE exécution.
+      versionPaquet: $[ stageDependencies.CI.Paquet.outputs['version.numero'] ]
+      venv: '${{ parameters.dossier }}\.venv\Scripts'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: paquet
+              displayName: 'Récupérer le paquet construit en CI'
+
+            - script: python -m venv "${{ parameters.dossier }}\.venv"
+              displayName: 'Environnement Python dédié à ${{ parameters.environnement }}'
+
+            - script: >
+                "$(venv)\python.exe" -m pip install --upgrade --quiet
+                "$(Pipeline.Workspace)\paquet\hydroradar-$(versionPaquet)-py3-none-any.whl"
+              displayName: 'Installer hydroradar $(versionPaquet)'
+
+            - script: >
+                "$(venv)\hydroradar.exe"
+                --departement ${{ parameters.departement }}
+                --dossier "${{ parameters.dossier }}"
+                --jours-initiaux ${{ parameters.joursInitiaux }}
+              displayName: 'Ingestion incrémentale, porte qualité, couches argent et or'
+
+            - powershell: |
+                Write-Host "Mesures nouvelles chargées dans ${{ parameters.environnement }} : $(mesuresNouvelles)"
+              displayName: 'Bilan du chargement'
+
+            - publish: '${{ parameters.dossier }}\controle'
+              artifact: 'controle-${{ parameters.environnement }}'
+              displayName: 'Publier le rapport qualité'
+              condition: succeededOrFailed()

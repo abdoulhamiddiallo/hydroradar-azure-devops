@@ -1,0 +1,21 @@
+# Modèle d'étapes (steps template) : réutilisé par chaque job qui a besoin du code et de Python.
+
+parameters:
+  - name: extras
+    displayName: 'Dépendances optionnelles à installer'
+    type: string
+    default: 'dev'
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+
+  - script: python -m venv .venv
+    displayName: 'Créer l''environnement virtuel'
+
+  - script: $(python) -m pip install --upgrade pip --quiet
+    displayName: 'Mettre pip à jour'
+
+  - script: $(python) -m pip install -e ".[${{ parameters.extras }}]" --quiet
+    displayName: 'Installer le projet et ses dépendances (${{ parameters.extras }})'
