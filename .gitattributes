@@ -1,0 +1,10 @@
+# Fins de ligne normalisées dans le dépôt, adaptées à chaque poste à l'extraction
+* text=auto
+*.py text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+# Le hook Git est un script shell : il doit garder des fins de ligne LF, même sous Windows
+.githooks/* text eol=lf

@@ -1,0 +1,26 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Paquet construit (il est publié par le pipeline, jamais versionné)
+dist/
+build/
+*.egg-info/
+
+# Données produites : elles se régénèrent, elles ne se versionnent pas
+/donnees/
+
+# Résultats de tests
+resultats-tests.xml
+
+# Éditeurs et système
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

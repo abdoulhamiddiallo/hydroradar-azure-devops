@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hydroradar"
+dynamic = ["version"]
+description = "Surveillance des rivières en temps réel à partir de l'API Hub'Eau Hydrométrie"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Abdoul Hamid Diallo" }]
+dependencies = [
+    "requests>=2.31,<3",
+    "pandas>=2.2,<4",
+    "pyarrow>=15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=5",
+    "ruff>=0.6,<1",
+    "build>=1.2",
+]
+
+[project.scripts]
+hydroradar = "hydroradar.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "hydroradar.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["hydroradar"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

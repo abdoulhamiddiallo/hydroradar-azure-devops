@@ -1,0 +1,19 @@
+#!/bin/sh
+# Hook pre-commit : Git l'exécute avant chaque commit. S'il échoue, le commit est refusé.
+# Activation (une fois par clone) : git config core.hooksPath .githooks
+
+# Python du dépôt principal : le même hook marche aussi dans un worktree (git worktree add).
+RACINE="$(git rev-parse --git-common-dir)/.."
+PY="$RACINE/.venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="$RACINE/.venv/bin/python"
+
+echo "pre-commit : contrôle du style (ruff)..."
+if ! "$PY" -m ruff check .; then
+    echo "Commit refusé : corrige les erreurs ci-dessus (beaucoup se corrigent avec : ruff check --fix .)"
+    exit 1
+fi
+if ! "$PY" -m ruff format --check .; then
+    echo "Commit refusé : mets le code en forme avec : .venv\\Scripts\\python.exe -m ruff format ."
+    exit 1
+fi
+echo "pre-commit : OK"
